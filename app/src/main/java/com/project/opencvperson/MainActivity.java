@@ -13,6 +13,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -27,17 +28,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+    private TextView textview_result;
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat matInput;
     private Mat matResult;
 
-    //    public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
+    //public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
     public native long loadCascade(String cascadeFileName);
 
     public native void detect(long cascadeClassifier_face,
 
                               long cascadeClassifier_eye, long matAddrInput, long matAddrResult);
+
+    public native long FileSize();
 
     public long cascadeClassifier_face = 0;
     public long cascadeClassifier_eye = 0;
@@ -57,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         OutputStream outputStream = null;
 
         try {
-            Log.d(TAG, "copyFile :: 다음 경로로 파일복사 " + pathDir);
+//            Log.d(TAG, "copyFile :: 다음 경로로 파일복사 " + pathDir);
             inputStream = assetManager.open(filename);
             outputStream = new FileOutputStream(pathDir);
 
@@ -72,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             outputStream.close();
             outputStream = null;
         } catch (Exception e) {
-            Log.d(TAG, "copyFile :: 파일 복사 중 예외 발생 " + e.toString());
+            e.printStackTrace();
         }
 
     }
@@ -81,10 +85,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         copyFile("haarcascade_frontalface_alt.xml");
         copyFile("haarcascade_eye_tree_eyeglasses.xml");
 
-        Log.d(TAG, "read_cascade_file:");
 
         cascadeClassifier_face = loadCascade("haarcascade_frontalface_alt.xml");
-        Log.d(TAG, "read_cascade_file:");
 
         cascadeClassifier_eye = loadCascade("haarcascade_eye_tree_eyeglasses.xml");
     }
@@ -114,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        textview_result = findViewById(R.id.textview_result);
         // Example of a call to a native method
 //        TextView tv = (TextView) findViewById(R.id.sample_text);
 //        tv.setText(stringFromJNI());
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
 //        mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
-        mOpenCvCameraView.setCameraIndex(1); // front-camera(1),  back-camera(0)
+        mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
     }
 
@@ -167,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
      * which is packaged with this application.
      */
 //    public native String stringFromJNI();
-
     @Override
     public void onCameraViewStarted(int width, int height) {
 
@@ -179,16 +180,33 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     @Override
+
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        if (FileSize() != 0) {
+            final String result;
+            if (FileSize() >= 14) {
+                result = "혼잡";
+            } else if (FileSize() >= 8 && FileSize() >= 13) {
+                result = "보통";
+            } else {
+                result = "여유";
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    textview_result.setText(result);
+                }
+            });
+        }
         matInput = inputFrame.rgba();
 
         if (matResult != null) matResult.release();
         matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
 //        ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
-        Core.flip(matInput, matInput, 1);
+        Core.flip(matInput.t(), matInput.t(), 1);
 
-        detect(cascadeClassifier_face,cascadeClassifier_eye, matInput.getNativeObjAddr(),
+        detect(cascadeClassifier_face, cascadeClassifier_eye, matInput.getNativeObjAddr(),
                 matResult.getNativeObjAddr());
         return matResult;
     }
