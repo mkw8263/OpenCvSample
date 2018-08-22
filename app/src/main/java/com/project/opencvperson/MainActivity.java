@@ -3,6 +3,7 @@ package com.project.opencvperson;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.Build;
@@ -13,7 +14,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -26,6 +30,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private TextView textview_result;
@@ -33,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat matInput;
     private Mat matResult;
+    private int defalut = 0;
+    private int stackCount = 0;
 
     //public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
     public native long loadCascade(String cascadeFileName);
@@ -120,7 +134,47 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // Example of a call to a native method
 //        TextView tv = (TextView) findViewById(R.id.sample_text);
 //        tv.setText(stringFromJNI());
+        ((Button) findViewById(R.id.btn_firm)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, Main2Activity.class));
+                if (mOpenCvCameraView != null)
+                    mOpenCvCameraView.disableView();
+            }
+        });
 
+        ((Button) findViewById(R.id.btn_submit)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(stackCount==0){
+                    Toast.makeText(MainActivity.this, "0명 입니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss", Locale.KOREA);
+                String today = simpleDateFormat.format(new Date());
+                ApiUtils.getSOService()
+                        .setCount(textview_result.getText().toString(), today)
+                        .enqueue(new Callback<HashMap<String, String>>() {
+                            @Override
+                            public void onResponse(@NonNull Call<HashMap<String, String>> call, @NonNull Response<HashMap<String, String>> response) {
+                                if (response.body().get("result").equals("success")) {
+                                    Toast.makeText(MainActivity.this, "성공적으로 저장하였습니다.", Toast.LENGTH_SHORT).show();
+                                    textview_result.setText("");
+                                    defalut=0;
+                                    stackCount=0;
+
+                                } else {
+                                    Toast.makeText(MainActivity.this, "저장을 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<HashMap<String, String>> call, @NonNull Throwable t) {
+                                Toast.makeText(MainActivity.this, "저장을 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //퍼미션 상태 확인
             if (!hasPermissions(PERMISSIONS)) {
@@ -182,19 +236,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        if (FileSize() != 0) {
-            final String result;
-            if (FileSize() >= 14) {
-                result = "혼잡";
-            } else if (FileSize() >= 8 && FileSize() >= 13) {
-                result = "보통";
-            } else {
-                result = "여유";
-            }
+        if (defalut != (int) FileSize()) {
+            defalut = (int) FileSize();
+            stackCount += (int) FileSize();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    textview_result.setText(result);
+                    textview_result.setText(String.valueOf(stackCount));
                 }
             });
         }
