@@ -14,6 +14,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * 리스트를 만들어주는 클래스
+ * 서버 요청 -> 응답이후 데이터들을 리스트로 변환
+ */
 public class Main2Activity extends AppCompatActivity {
 List<Items> items=new ArrayList<>();
     @Override
@@ -27,7 +31,6 @@ List<Items> items=new ArrayList<>();
             public void onResponse(Call<List<Items>> call, Response<List<Items>> response) {
                 if (response.isSuccessful()){
                     if (response.body().size()>0){
-                        Log.e("eeeerwfvsdf",""+response.body().size());
                         for (Items item:response.body()){
                             items.add(new Items(item.getCc_num(),item.getCc_count(),item.getCc_date()));
                         }

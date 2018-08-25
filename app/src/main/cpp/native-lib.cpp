@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include <android/log.h>
 //#include <string>
+/*
+*/
 using namespace cv;
 using namespace std;
 long filesize;

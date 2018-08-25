@@ -10,7 +10,7 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 /**
- * Created by M on 2018-08-21.
+ * 서버 요청 주소들
  */
 
 public interface Service {

@@ -11,7 +11,9 @@ import android.widget.TextView;
 
 import java.util.List;
 
-
+/**
+ * 리스트 아이템 하나하나 담당 해주는 클래스 어댑터
+ */
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     List<Items> items;
     Context context;
@@ -30,7 +32,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Log.e("eeeere",items.get(position).getCc_count());
         holder.tv_count.setText(items.get(position).getCc_count()+" 명");
         holder.tv_date.setText(items.get(position).getCc_date());
     }
@@ -43,7 +44,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     class ViewHolder extends RecyclerView.ViewHolder {
         TextView tv_count, tv_date;
 
-        public ViewHolder(View itemView) {
+         ViewHolder(View itemView) {
             super(itemView);
             tv_count=itemView.findViewById(R.id.tv_count);
             tv_date=itemView.findViewById(R.id.tv_date);

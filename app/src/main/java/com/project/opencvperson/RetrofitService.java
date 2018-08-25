@@ -9,7 +9,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Created by M on 2018-08-21.
+ * 서버를 보내는 retrofit client 클래스
  */
 
 public class RetrofitService {

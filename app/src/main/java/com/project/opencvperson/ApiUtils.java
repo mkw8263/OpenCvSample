@@ -1,7 +1,7 @@
 package com.project.opencvperson;
 
 /**
- * Created by M on 2018-08-21.
+ * 서버 주소
  */
 
 public class ApiUtils {

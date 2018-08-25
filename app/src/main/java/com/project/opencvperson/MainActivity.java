@@ -39,13 +39,19 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * 메인 화면
+ */
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private TextView textview_result;
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat matInput;
     private Mat matResult;
+
+    // 기본 수
     private int defalut = 0;
+    // 현재 쌓인 카운트
     private int stackCount = 0;
 
     //public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
@@ -55,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                               long cascadeClassifier_eye, long matAddrInput, long matAddrResult);
 
+    // 실시간 얼굴 카운트
     public native long FileSize();
 
     public long cascadeClassifier_face = 0;
@@ -75,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         OutputStream outputStream = null;
 
         try {
-//            Log.d(TAG, "copyFile :: 다음 경로로 파일복사 " + pathDir);
             inputStream = assetManager.open(filename);
             outputStream = new FileOutputStream(pathDir);
 
@@ -85,10 +91,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 outputStream.write(buffer, 0, read);
             }
             inputStream.close();
-            inputStream = null;
             outputStream.flush();
             outputStream.close();
-            outputStream = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -121,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
     };
 
-    // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
@@ -131,9 +134,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textview_result = findViewById(R.id.textview_result);
-        // Example of a call to a native method
-//        TextView tv = (TextView) findViewById(R.id.sample_text);
-//        tv.setText(stringFromJNI());
+
+        // 왼쪽버튼 클릭
         ((Button) findViewById(R.id.btn_firm)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -143,20 +145,26 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         });
 
+        //오른쪽 버튼 클릭
         ((Button) findViewById(R.id.btn_submit)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // 0명일때
                 if(stackCount==0){
                     Toast.makeText(MainActivity.this, "0명 입니다.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                // 지금 날짜와 시간
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss", Locale.KOREA);
                 String today = simpleDateFormat.format(new Date());
+
+                // 서버 데이터 전송 http 통신
                 ApiUtils.getSOService()
                         .setCount(textview_result.getText().toString(), today)
                         .enqueue(new Callback<HashMap<String, String>>() {
                             @Override
                             public void onResponse(@NonNull Call<HashMap<String, String>> call, @NonNull Response<HashMap<String, String>> response) {
+                               //성공적으로 보내졌을떄
                                 if (response.body().get("result").equals("success")) {
                                     Toast.makeText(MainActivity.this, "성공적으로 저장하였습니다.", Toast.LENGTH_SHORT).show();
                                     textview_result.setText("");
@@ -170,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                             @Override
                             public void onFailure(@NonNull Call<HashMap<String, String>> call, @NonNull Throwable t) {
+                                //실패했을때
                                 Toast.makeText(MainActivity.this, "저장을 실패하였습니다.", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -186,7 +195,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-//        mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
     }
@@ -236,6 +244,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
 
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        //실시간 카운트 체크하는곳
         if (defalut != (int) FileSize()) {
             defalut = (int) FileSize();
             stackCount += (int) FileSize();

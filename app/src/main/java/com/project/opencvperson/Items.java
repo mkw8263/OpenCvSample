@@ -1,7 +1,7 @@
 package com.project.opencvperson;
 
 /**
- * Created by M on 2018-08-21.
+ * 서버에서 받은 데이터 담을 클래스
  */
 
 public class Items {
